@@ -1,0 +1,47 @@
+import json  # Import the json module
+
+class RealTimePacketInspector:
+    def __init__(self):
+        self.traffic_simulator = TrafficSimulator()
+        self.analyzer = AnomalyDetector(threshold=-0.3)
+        self.packet_data = []
+
+    def run_inspection(self):
+        while True:
+            packet_count = self.traffic_simulator.simulate_packet()
+            if packet_count is not None:
+                anomaly_result = self.analyzer.detect_anomaly(packet_count)
+                if anomaly_result:
+                    print(f"Detection Result: {anomaly_result}")
+                timestamp = time.time()
+                self.packet_data.append((timestamp, packet_count, anomaly_result or "Normal"))
+
+                # Save the current packet data to response.json
+                self.save_to_json(timestamp, packet_count, anomaly_result or "Normal")
+
+                time.sleep(random.uniform(0.3, 1.5))
+
+    def save_to_json(self, timestamp, packet_count, anomaly_result):
+        # Prepare the data to be written
+        data_entry = {
+            "timestamp": timestamp,
+            "packet_count": packet_count,
+            "anomaly_result": anomaly_result
+        }
+
+        # Read existing data from response.json if it exists
+        try:
+            with open('response.json', 'r') as json_file:
+                current_data = json.load(json_file)
+        except FileNotFoundError:
+            current_data = []  # If the file doesn't exist, start with an empty list
+
+        # Append the new data entry to the current data
+        current_data.append(data_entry)
+
+        # Write the updated data back to response.json
+        with open('response.json', 'w') as json_file:
+            json.dump(current_data, json_file, indent=4)
+
+    def get_packet_data(self):
+        return self.packet_data[-50:]  # Return the last 50 packets for visualization
